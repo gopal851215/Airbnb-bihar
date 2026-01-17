@@ -1,152 +1,69 @@
-import React, { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { handleError } from "../Utils/error";
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
-function Login() {
-  const navigate = useNavigate(); // for redirect
+export default function Login() {
+  const navigate = useNavigate();
+  const [form, setForm] = useState({ email: "", password: "" });
 
-  const [loginInfo, setLoginInfo] = useState({
-    email: "",
-    password: "",
-  });
+  const handleChange = (e) =>
+    setForm({ ...form, [e.target.name]: e.target.value });
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setLoginInfo({ ...loginInfo, [name]: value });
-  };
-
-  const handleLogin = async (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const { email, password } = loginInfo;
+    const res = await fetch("http://localhost:5000/auth/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(form),
+    });
 
-    if (!email || !password) {
-      return handleError("All fields are required");
-    }
+    const data = await res.json();
 
-    try {
-      const url = "http://localhost:5000/auth/login"; // make sure backend is running
-      const response = await fetch(url, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
-      });
+    if (!res.ok) return alert(data.message);
 
-      const result = await response.json();
-      console.log("Login Response:", result);
+    localStorage.setItem("token", data.token);
+    localStorage.setItem("user", JSON.stringify(data.user));
 
-      if (!response.ok) {
-        return handleError(result.message || "Login failed");
-      }
-
-      // Save JWT token in localStorage
-      localStorage.setItem("token", result.token);
-
-      // ✅ Redirect to home page after login
-      navigate("/"); 
-
-    } catch {
-      handleError("Server not running or connection refused");
-    }
+    navigate("/");
   };
 
   return (
-    <div style={container}>
-      <div style={card}>
-        <h2 style={{ textAlign: "center", color: "#ff385c" }}>Welcome Back</h2>
-
-        <form onSubmit={handleLogin}>
-          <input
-            type="email"
-            name="email"
-            placeholder="Email"
-            value={loginInfo.email}
-            onChange={handleChange}
-            style={input}
-          />
-
-          <input
-            type="password"
-            name="password"
-            placeholder="Password"
-            value={loginInfo.password}
-            onChange={handleChange}
-            style={input}
-          />
-
-          <button type="submit" style={button}>Login</button>
-        </form>
-
-        <p style={{ textAlign: "center", marginTop: "15px" }}>
-          Don’t have an account?{" "}
-          <Link to="/signup" style={{ color: "#ff385c" }}>Signup</Link>
-        </p>
-      </div>
+    <div style={styles.container}>
+      <form style={styles.card} onSubmit={handleSubmit}>
+        <h2>Login</h2>
+        <input name="email" placeholder="Email" onChange={handleChange} style={styles.input} />
+        <input name="password" type="password" placeholder="Password" onChange={handleChange} style={styles.input} />
+        <button style={styles.button}>Login</button>
+      </form>
     </div>
   );
 }
 
-/* ===== Styles ===== */
-const container = {
-  minHeight: "100vh",
-  display: "flex",
-  justifyContent: "center",
-  alignItems: "center",
-  background: "#f7f7f7",
+const styles = {
+  container: {
+    minHeight: "100vh",
+    background: "#f7f7f7",
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  card: {
+    width: "320px",
+    background: "#fff",
+    padding: "25px",
+    borderRadius: "14px",
+    boxShadow: "0 10px 30px rgba(0,0,0,0.15)",
+    display: "flex",
+    flexDirection: "column",
+    gap: "12px",
+  },
+  input: { padding: "10px", borderRadius: "8px", border: "1px solid #ccc" },
+  button: {
+    padding: "12px",
+    background: "#ff385c",
+    color: "#fff",
+    border: "none",
+    borderRadius: "10px",
+    cursor: "pointer",
+  },
 };
-
-const card = {
-  background: "#fff",
-  padding: "30px",
-  borderRadius: "12px",
-  width: "350px",
-  boxShadow: "0 8px 20px rgba(0,0,0,0.1)",
-};
-
-const input = {
-  width: "100%",
-  padding: "10px",
-  marginTop: "12px",
-  borderRadius: "8px",
-  border: "1px solid #ccc",
-};
-
-const button = {
-  width: "100%",
-  padding: "12px",
-  marginTop: "20px",
-  borderRadius: "25px",
-  border: "none",
-  background: "#ff385c",
-  color: "#fff",
-  fontWeight: "bold",
-  cursor: "pointer",
-};
-
-export default Login;
-// const handleLogin = async (e) => {
-//   e.preventDefault();
-
-//   const { email, password } = loginInfo;
-//   if (!email || !password) return handleError("All fields are required");
-
-//   try {
-//     const response = await fetch("http://localhost:5000/api/auth/login", {
-//       method: "POST",
-//       headers: { "Content-Type": "application/json" },
-//       body: JSON.stringify({ email, password }),
-//     });
-
-//     const result = await response.json();
-
-//     if (!response.ok) {
-//       return handleError(result.message || "Login failed");
-//     }
-
-//     localStorage.setItem("token", result.token);
-//     navigate("/apphome");
-
-//   } catch {
-//     handleError("Server not running");
-//   }
-// };

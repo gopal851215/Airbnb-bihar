@@ -1,142 +1,83 @@
-import React, { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { handleError } from "../Utils/error";
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
-function Signup() {
+export default function Signup() {
   const navigate = useNavigate();
-
-  const [signupinfo, setSignupinfo] = useState({
+  const [form, setForm] = useState({
     name: "",
     email: "",
     password: "",
+    role: "guest",
   });
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setSignupinfo({ ...signupinfo, [name]: value });
-  };
+  const handleChange = (e) =>
+    setForm({ ...form, [e.target.name]: e.target.value });
 
-  const handleSignup = async (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    const { name, email, password } = signupinfo;
 
-    if (!name || !email || !password) {
-      return handleError("All fields are required");
-    }
+    const res = await fetch("http://localhost:5000/auth/signup", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(form),
+    });
 
-    if (name.length < 3) {
-      return handleError("Name must be at least 3 characters");
-    }
-
-    if (password.length < 6) {
-      return handleError("Password must be at least 6 characters");
-    }
-
-    try {
-      const response = await fetch("http://localhost:5000/auth/signup", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, email, password }),
-      });
-
-      const result = await response.json();
-
-      if (!response.ok) {
-        return handleError(result.message || "Signup failed");
-      }
-
-      alert("Signup successful 🎉");
-      navigate("/login");
-    } catch (error) {
-      handleError("Server not running or connection refused");
-    }
+    if (res.ok) navigate("/login");
+    else alert("Signup failed");
   };
 
   return (
-    <div style={container}>
-      <div style={card}>
-        <h2 style={title}>Create Account</h2>
+    <div style={styles.container}>
+      <form style={styles.card} onSubmit={handleSubmit}>
+        <h2 style={styles.title}>Create Account</h2>
 
-        <form onSubmit={handleSignup}>
-          <input
-            type="text"
-            name="name"
-            placeholder="Full Name"
-            value={signupinfo.name}
-            onChange={handleChange}
-            style={input}
-          />
+        <input name="name" placeholder="Full Name" onChange={handleChange} style={styles.input} />
+        <input name="email" placeholder="Email" onChange={handleChange} style={styles.input} />
+        <input name="password" type="password" placeholder="Password" onChange={handleChange} style={styles.input} />
 
-          <input
-            type="email"
-            name="email"
-            placeholder="Email"
-            value={signupinfo.email}
-            onChange={handleChange}
-            style={input}
-          />
+        <select name="role" onChange={handleChange} style={styles.input}>
+          <option value="guest">Guest</option>
+          <option value="host">Host</option>
+        </select>
 
-          <input
-            type="password"
-            name="password"
-            placeholder="Password"
-            value={signupinfo.password}
-            onChange={handleChange}
-            style={input}
-          />
-
-          <button type="submit" style={button}>
-            Signup
-          </button>
-        </form>
-
-        <p style={footerText}>
-          Already have an account?{" "}
-          <Link to="/login" style={link}>
-            Login
-          </Link>
-        </p>
-      </div>
+        <button style={styles.button}>Signup</button>
+      </form>
     </div>
   );
 }
 
-/* ===== Styles ===== */
-const container = {
-  minHeight: "100vh",
-  display: "flex",
-  justifyContent: "center",
-  alignItems: "center",
-  background: "#f7f7f7",
+const styles = {
+  container: {
+    minHeight: "100vh",
+    background: "#f7f7f7",
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  card: {
+    width: "350px",
+    background: "#fff",
+    padding: "30px",
+    borderRadius: "14px",
+    boxShadow: "0 10px 30px rgba(0,0,0,0.15)",
+    display: "flex",
+    flexDirection: "column",
+    gap: "12px",
+  },
+  title: { textAlign: "center", marginBottom: "10px" },
+  input: {
+    padding: "10px",
+    borderRadius: "8px",
+    border: "1px solid #ccc",
+  },
+  button: {
+    marginTop: "10px",
+    padding: "12px",
+    background: "#ff385c",
+    color: "#fff",
+    border: "none",
+    borderRadius: "10px",
+    cursor: "pointer",
+    fontWeight: "600",
+  },
 };
-const card = {
-  background: "#fff",
-  padding: "30px",
-  borderRadius: "12px",
-  width: "350px",
-  boxShadow: "0 8px 20px rgba(0,0,0,0.1)",
-};
-const title = { textAlign: "center", color: "#ff385c", marginBottom: "20px" };
-const input = {
-  width: "100%",
-  padding: "10px",
-  marginTop: "12px",
-  borderRadius: "8px",
-  border: "1px solid #ccc",
-  fontSize: "14px",
-};
-const button = {
-  width: "100%",
-  padding: "12px",
-  marginTop: "20px",
-  borderRadius: "25px",
-  border: "none",
-  background: "#ff385c",
-  color: "#fff",
-  fontWeight: "bold",
-  cursor: "pointer",
-};
-const footerText = { textAlign: "center", marginTop: "15px" };
-const link = { color: "#ff385c", fontWeight: "600" };
-
-export default Signup;

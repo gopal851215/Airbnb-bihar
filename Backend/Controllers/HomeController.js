@@ -1,39 +1,43 @@
-const Home = require("../Models/Home");
+const Home = require("../Models/home");
 
-exports.addHome = async (req, res) => {
+const addHome = async (req, res) => {
   try {
     const { name, location, description, rating } = req.body;
+    const image = req.file ? req.file.filename : null;
 
-    if (!name || !location) {
-      return res.status(400).json({ message: "Required fields missing" });
+    // Only host can add homes
+    if (req.user.role !== "host") {
+      return res.status(403).json({ message: "Only hosts can add homes" });
     }
 
-    const newHome = new Home({
+    console.log("REQ.BODY:", req.body);
+    console.log("REQ.FILE:", req.file);
+
+    const home = new Home({
       name,
       location,
       description,
       rating,
-      image: req.file ? req.file.filename : null,
+      image,
       addedBy: req.user.id,
     });
 
-    await newHome.save();
-
-    res.status(201).json({
-      message: "Home added successfully",
-      home: newHome,
-    });
-  } catch (error) {
-    console.error("ADD HOME ERROR:", error);
+    await home.save();
+    res.status(201).json(home);
+  } catch (err) {
+    console.error(err);
     res.status(500).json({ message: "Server error" });
   }
 };
 
-exports.getHomes = async (req, res) => {
+const getHomes = async (req, res) => {
   try {
-    const homes = await Home.find().sort({ createdAt: -1 });
+    const homes = await Home.find();
     res.json(homes);
-  } catch (error) {
+  } catch (err) {
+    console.error(err);
     res.status(500).json({ message: "Server error" });
   }
 };
+
+module.exports = { addHome, getHomes };
